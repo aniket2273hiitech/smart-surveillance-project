@@ -33,6 +33,10 @@ public class CameraController {
         status.put("lastResult", cameraStreamService.getLastDetectionResult());
         status.put("lastCriminalName", cameraStreamService.getLastCriminalName());
         status.put("lastConfidence", cameraStreamService.getLastConfidence());
+        status.put("detectionInProgress", cameraStreamService.isDetectionInProgress());
+        status.put("lastStatusUpdatedAt", cameraStreamService.getLastStatusUpdatedAt());
+        status.put("lastMatchEventId", cameraStreamService.getLastMatchEventId());
+        status.put("detectionEveryNFrames", cameraStreamService.getDetectionEveryNFrames());
         status.put("timestamp", java.time.LocalDateTime.now().toString());
         return status;
     }

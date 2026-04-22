@@ -68,6 +68,10 @@ public class FaceDetectionService {
     private double matchThreshold;
     @Value("${app.detection.min-score-gap:0.08}")
     private double minScoreGap;
+    @Value("${app.detection.live-match-threshold:0.50}")
+    private double liveMatchThreshold;
+    @Value("${app.detection.live-min-score-gap:0.03}")
+    private double liveMinScoreGap;
     @Value("${app.detection.scan-match-threshold:0.62}")
     private double scanMatchThreshold;
     @Value("${app.detection.scan-min-score-gap:0.10}")
@@ -93,7 +97,8 @@ public class FaceDetectionService {
     private volatile String lbphTrainingSignature = "";
     private volatile String pendingLiveName = "";
     private volatile int pendingLiveCount = 0;
-    private static final int LIVE_CONFIRMATION_FRAMES = 2;
+    @Value("${app.detection.live-confirmation-frames:1}")
+    private int liveConfirmationFrames;
     private volatile String lastConfirmedLiveName = "";
     private volatile long lastConfirmedLiveAt = 0L;
     private static final long LIVE_ALERT_COOLDOWN_MS = 12000L;
@@ -388,10 +393,10 @@ public class FaceDetectionService {
         if (candidate.fromLbph) {
             return candidate.lbphConfidence <= lbphStrictConfidence;
         }
-        if (candidate.bestScore < matchThreshold) {
+        if (candidate.bestScore < liveMatchThreshold) {
             return false;
         }
-        return (candidate.bestScore - candidate.secondBestScore) >= minScoreGap;
+        return (candidate.bestScore - candidate.secondBestScore) >= liveMinScoreGap;
     }
 
     private boolean isValidMatchForScan(MatchCandidate candidate) {
@@ -768,6 +773,7 @@ public class FaceDetectionService {
         List<Criminal> criminals = criminalService.getAllActiveCriminals();
         Criminal bestMatch = null;
         double bestScore = 0.0;
+        Rect bestRect = null;
 
         for (Rect rect : faces) {
             Mat faceRoi = new Mat(gray, rect);
@@ -780,27 +786,33 @@ public class FaceDetectionService {
             double localBestScore = localCandidate.bestScore;
 
             if (isValidMatchForLive(localCandidate)) {
-                Imgproc.rectangle(color, rect, new Scalar(0, 0, 255), 2);
-                String label = localBest.getName() + " " + (int) (localBestScore * 100) + "%";
-                int y = Math.max(rect.y - 8, 18);
-                Imgproc.putText(color, label, new Point(rect.x, y),
-                        Imgproc.FONT_HERSHEY_SIMPLEX, 0.6, new Scalar(0, 0, 255), 2);
-
                 if (localBestScore > bestScore) {
                     bestScore = localBestScore;
                     bestMatch = localBest;
+                    bestRect = rect;
                 }
             }
         }
 
-        boolean liveMatchConfirmed = false;
+        boolean liveMatchConfirmedNow = false;
+        boolean liveMatchDisplay = false;
         if (bestMatch == null) {
             shouldConfirmLiveMatch("");
         }
         if (bestMatch != null) {
             try {
-                liveMatchConfirmed = shouldConfirmLiveMatch(bestMatch.getName());
-                if (liveMatchConfirmed) {
+                liveMatchConfirmedNow = shouldConfirmLiveMatch(bestMatch.getName());
+                liveMatchDisplay = liveMatchConfirmedNow || isWithinConfirmedWindow(bestMatch.getName());
+
+                if (liveMatchDisplay && bestRect != null) {
+                    Imgproc.rectangle(color, bestRect, new Scalar(0, 0, 255), 2);
+                    String label = bestMatch.getName() + " " + (int) (bestScore * 100) + "%";
+                    int y = Math.max(bestRect.y - 8, 18);
+                    Imgproc.putText(color, label, new Point(bestRect.x, y),
+                            Imgproc.FONT_HERSHEY_SIMPLEX, 0.6, new Scalar(0, 0, 255), 2);
+                }
+
+                if (liveMatchConfirmedNow) {
                     DetectionLog log = new DetectionLog();
                     log.setLocation(location);
                     log.setDetectedBy(loggedInUser);
@@ -820,8 +832,9 @@ public class FaceDetectionService {
         Imgcodecs.imencode(".jpg", color, output);
         byte[] annotated = output.toArray();
 
-        if (bestMatch != null && liveMatchConfirmed) {
-            return new LiveFrameResult(annotated, "MATCHED", bestMatch.getName(), bestScore);
+        if (bestMatch != null && liveMatchDisplay) {
+            String status = liveMatchConfirmedNow ? "MATCHED_NEW" : "MATCHED";
+            return new LiveFrameResult(annotated, status, bestMatch.getName(), bestScore);
         }
         return new LiveFrameResult(annotated, "NO_MATCH", "", 0.0);
     }
@@ -843,7 +856,7 @@ public class FaceDetectionService {
             pendingLiveName = criminalName;
             pendingLiveCount = 1;
         }
-        if (pendingLiveCount == LIVE_CONFIRMATION_FRAMES) {
+        if (pendingLiveCount >= Math.max(1, liveConfirmationFrames)) {
             lastConfirmedLiveName = criminalName;
             lastConfirmedLiveAt = now;
             pendingLiveName = "";
@@ -851,5 +864,15 @@ public class FaceDetectionService {
             return true;
         }
         return false;
+    }
+
+    private synchronized boolean isWithinConfirmedWindow(String criminalName) {
+        if (criminalName == null || criminalName.isBlank()) {
+            return false;
+        }
+        if (!criminalName.equals(lastConfirmedLiveName)) {
+            return false;
+        }
+        return (System.currentTimeMillis() - lastConfirmedLiveAt) < LIVE_ALERT_COOLDOWN_MS;
     }
 }

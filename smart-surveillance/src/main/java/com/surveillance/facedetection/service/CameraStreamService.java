@@ -40,10 +40,16 @@ public class CameraStreamService {
     private volatile String lastDetectionResult = "WAITING";
     private volatile String lastCriminalName    = "";
     private volatile double lastConfidence      = 0.0;
+    private volatile long lastStatusUpdatedAt   = 0L;
+    private volatile long lastMatchEventId      = 0L;
 
     public String getLastDetectionResult() { return lastDetectionResult; }
     public String getLastCriminalName()    { return lastCriminalName; }
     public double getLastConfidence()      { return lastConfidence; }
+    public boolean isDetectionInProgress() { return detectionInProgress.get(); }
+    public long getLastStatusUpdatedAt()   { return lastStatusUpdatedAt; }
+    public long getLastMatchEventId()      { return lastMatchEventId; }
+    public int getDetectionEveryNFrames()  { return Math.max(1, detectionEveryNFrames); }
 
     private VideoCapture videoCapture;
     private ScheduledExecutorService executor;
@@ -54,6 +60,7 @@ public class CameraStreamService {
 
     // Latest frame stored as JPEG bytes for MJPEG streaming
     private volatile byte[] latestFrame = null;
+    private volatile long keepAnnotatedUntilMs = 0L;
 
     public synchronized void startCamera(String operatorUsername) {
         if (running.get()) return;
@@ -78,6 +85,8 @@ public class CameraStreamService {
             }, 0, 120, TimeUnit.MILLISECONDS);
 
             running.set(true);
+            lastDetectionResult = "SCANNING";
+            lastStatusUpdatedAt = System.currentTimeMillis();
             System.out.println("✅ Camera started by: " + operatorUsername);
 
         } catch (UnsatisfiedLinkError e) {
@@ -94,6 +103,8 @@ public class CameraStreamService {
         running.set(false);
         detectionInProgress.set(false);
         latestFrame = null;
+        lastDetectionResult = "WAITING";
+        lastStatusUpdatedAt = System.currentTimeMillis();
         System.out.println("🛑 Camera stopped.");
     }
 
@@ -110,13 +121,18 @@ public class CameraStreamService {
 
         MatOfByte buffer = new MatOfByte();
         Imgcodecs.imencode(".jpg", frame, buffer);
-        latestFrame = buffer.toArray();
+        byte[] rawFrame = buffer.toArray();
+        if (System.currentTimeMillis() >= keepAnnotatedUntilMs) {
+            latestFrame = rawFrame;
+        }
 
         frameCount++;
         if (frameCount % Math.max(1, detectionEveryNFrames) != 0) return;
         if (detectionInProgress.get()) return;
 
         final byte[] frameForDetection = latestFrame;
+        lastDetectionResult = "ANALYZING";
+        lastStatusUpdatedAt = System.currentTimeMillis();
         detectionInProgress.set(true);
         detectionExecutor.submit(() -> {
             try {
@@ -131,6 +147,17 @@ public class CameraStreamService {
                 lastDetectionResult = result.getStatus();
                 lastCriminalName = result.getCriminalName();
                 lastConfidence = result.getConfidence();
+                lastStatusUpdatedAt = System.currentTimeMillis();
+                if ("MATCHED_NEW".equals(result.getStatus())) {
+                    lastMatchEventId++;
+                }
+                if ("MATCHED".equals(result.getStatus())) {
+                    keepAnnotatedUntilMs = System.currentTimeMillis() + 1200;
+                } else if ("MATCHED_NEW".equals(result.getStatus())) {
+                    keepAnnotatedUntilMs = System.currentTimeMillis() + 1600;
+                } else {
+                    keepAnnotatedUntilMs = 0L;
+                }
             } catch (Exception e) {
                 System.err.println("⚠️ Detection error: " + e.getMessage());
             } finally {

@@ -98,6 +98,10 @@
                 🔍 Scanning for faces...
             </div>
         </div>
+        <div class="table-section" style="margin-top:0.75rem; padding:0.75rem 1rem;">
+            <p id="statusHeadline"><strong>Status:</strong> Camera active, starting analysis...</p>
+            <p id="statusSubline" class="no-data" style="margin-top:0.25rem;">Please keep face clear and front-facing.</p>
+        </div>
 
         <!-- Matched Criminal Info Box -->
         <div class="matched-info" id="matchedInfo">
@@ -151,6 +155,38 @@
 <div th:replace="~{fragments/websocket :: websocketScript}"></div>
 
 <script th:inline="javascript">
+    var lastSeenMatchEventId = 0;
+
+    function addLiveAlertCardFromStatus(data) {
+        if (!data || !data.lastCriminalName) return;
+        var noMsg = document.getElementById('noAlertMsg');
+        if (noMsg) noMsg.style.display = 'none';
+
+        var badge = document.getElementById('liveCount');
+        if (badge) {
+            var n = parseInt(badge.getAttribute('data-count') || '0', 10) + 1;
+            badge.setAttribute('data-count', String(n));
+            badge.style.display = 'inline-block';
+            badge.textContent = n + ' NEW';
+        }
+
+        var card = document.createElement('div');
+        card.className = 'live-alert-card';
+        card.innerHTML =
+            '<div class="live-alert-header">' +
+                '<span class="live-alert-icon">🚨</span>' +
+                '<strong>CRIMINAL DETECTED</strong>' +
+                '<span class="live-alert-time">' + new Date().toLocaleTimeString() + '</span>' +
+            '</div>' +
+            '<div class="live-alert-body">' +
+                '<p><strong>Name:</strong> ' + data.lastCriminalName + '</p>' +
+                '<p><strong>Location:</strong> Live Camera</p>' +
+                '<p><strong>Confidence:</strong> ' + (data.lastConfidence * 100).toFixed(1) + '%</p>' +
+            '</div>';
+        var box = document.getElementById('liveAlertBox');
+        if (box) box.insertBefore(card, box.firstChild);
+    }
+
     // Poll /camera/status every 1 second to update overlay
     function pollStatus() {
         fetch('/camera/status', { cache: 'no-store' })
@@ -158,13 +194,19 @@
             .then(function(data) {
                 var overlay  = document.getElementById('statusOverlay');
                 var matchBox = document.getElementById('matchedInfo');
+                var statusHeadline = document.getElementById('statusHeadline');
+                var statusSubline = document.getElementById('statusSubline');
 
                 if (!data.running) return;
 
-                if (data.lastResult === 'MATCHED') {
+                if (data.lastResult === 'MATCHED' || data.lastResult === 'MATCHED_NEW') {
                     // Show red flashing overlay
                     overlay.className = 'camera-overlay overlay-matched';
                     overlay.textContent = '🚨 CRIMINAL DETECTED: ' + data.lastCriminalName;
+                    if (statusHeadline) statusHeadline.innerHTML =
+                        '<strong>Status:</strong> Match found for ' + data.lastCriminalName;
+                    if (statusSubline) statusSubline.textContent =
+                        'Confidence ' + (data.lastConfidence * 100).toFixed(1) + '% | Last update: ' + new Date().toLocaleTimeString();
 
                     // Show criminal info box
                     matchBox.classList.add('show');
@@ -175,14 +217,42 @@
                     document.getElementById('detectionTime').textContent =
                         new Date().toLocaleTimeString();
 
+                    if (data.lastResult === 'MATCHED_NEW' &&
+                        data.lastMatchEventId > lastSeenMatchEventId) {
+                        lastSeenMatchEventId = data.lastMatchEventId;
+                        addLiveAlertCardFromStatus(data);
+                    }
+
                 } else if (data.lastResult === 'NO_MATCH') {
                     overlay.className = 'camera-overlay overlay-nomatch';
                     overlay.textContent = '✅ No criminal detected';
                     matchBox.classList.remove('show');
+                    if (statusHeadline) statusHeadline.innerHTML =
+                        '<strong>Status:</strong> Face analyzed, no confirmed criminal match.';
+                    if (statusSubline) statusSubline.textContent =
+                        'Analyzer runs every ' + data.detectionEveryNFrames + ' frame(s). Keep face steady and clear.';
+                } else if (data.lastResult === 'ANALYZING' || data.detectionInProgress) {
+                    overlay.className = 'camera-overlay overlay-waiting';
+                    overlay.textContent = '🧠 Analyzing current frame...';
+                    if (statusHeadline) statusHeadline.innerHTML =
+                        '<strong>Status:</strong> Analyzing current frame...';
+                    if (statusSubline) statusSubline.textContent =
+                        'Please face camera directly. Processing takes a moment.';
+                } else if (data.lastResult === 'SCANNING') {
+                    overlay.className = 'camera-overlay overlay-waiting';
+                    overlay.textContent = '🔍 Camera active — scanning for faces...';
+                    if (statusHeadline) statusHeadline.innerHTML =
+                        '<strong>Status:</strong> Camera active and scanning.';
+                    if (statusSubline) statusSubline.textContent =
+                        'System checks every ' + data.detectionEveryNFrames + ' frame(s).';
 
                 } else {
                     overlay.className = 'camera-overlay overlay-waiting';
-                    overlay.textContent = '🔍 Scanning for faces...';
+                    overlay.textContent = '📡 Camera running... waiting for next analysis cycle';
+                    if (statusHeadline) statusHeadline.innerHTML =
+                        '<strong>Status:</strong> Camera running.';
+                    if (statusSubline) statusSubline.textContent =
+                        'Waiting for next analysis cycle.';
                 }
             })
             .catch(function(e) {
