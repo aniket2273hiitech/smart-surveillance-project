@@ -4,11 +4,6 @@
       lang="en">
 <body>
 
-<!--
-  Reusable navbar fragment.
-  Usage in other templates:
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
--->
 <nav th:fragment="navbar" class="navbar">
     <div class="navbar-brand">
         <span class="navbar-icon">📹</span>
@@ -17,7 +12,6 @@
 
     <ul class="navbar-links">
 
-        <!-- ADMIN links -->
         <li sec:authorize="hasRole('ADMIN')">
             <a th:href="@{/admin/dashboard}">Dashboard</a>
         </li>
@@ -31,21 +25,18 @@
             <a th:href="@{/admin/logs}">Detection Logs</a>
         </li>
 
-        <!-- POLICE OFFICER links -->
         <li sec:authorize="hasRole('POLICE_OFFICER')">
             <a th:href="@{/officer/dashboard}">Dashboard</a>
         </li>
         <li sec:authorize="hasRole('POLICE_OFFICER')">
             <a th:href="@{/officer/alerts}">
                 Alerts
-                <!-- Alert badge -->
             </a>
         </li>
         <li sec:authorize="hasRole('POLICE_OFFICER')">
             <a th:href="@{/officer/reports}">Reports</a>
         </li>
 
-        <!-- Both roles -->
         <li sec:authorize="isAuthenticated()">
             <a th:href="@{/camera/monitor}">📹 Live Monitor</a>
         </li>

@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <!-- Real-time alerts via WebSocket — no page refresh needed -->
     <title>Officer Dashboard — Smart Surveillance</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
@@ -19,13 +18,11 @@
 
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
-    <!-- Pending Alerts Banner -->
     <div th:if="${pendingCount > 0}" class="alert-banner">
         <span class="alert-banner-icon">🚨</span>
         <strong th:text="${pendingCount} + ' UNACKNOWLEDGED ALERT(S) REQUIRE YOUR ATTENTION'"></strong>
     </div>
 
-    <!-- Quick Actions -->
     <div class="quick-actions">
         <a th:href="@{/camera/monitor}"  class="btn btn-scan">📹 Live Camera Monitor</a>
         <a th:href="@{/detection/scan}"  class="btn btn-primary">🔍 Scan Face</a>
@@ -33,7 +30,6 @@
         <a th:href="@{/officer/reports}" class="btn btn-outline">📋 Reports</a>
     </div>
 
-    <!-- Pending Alerts List -->
     <div class="table-section">
         <h3>🔔 Pending Alerts</h3>
         <div class="table-wrapper">
@@ -72,7 +68,6 @@
         </div>
     </div>
 
-    <!-- Recent Matched Detections -->
     <div class="table-section">
         <h3>Recent Criminal Detections</h3>
         <div class="table-wrapper">

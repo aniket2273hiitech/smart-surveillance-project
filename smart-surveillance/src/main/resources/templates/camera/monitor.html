@@ -79,7 +79,6 @@
 
     <div class="page-header">
         <h2>📹 Live Camera Monitoring</h2>
-        <p class="page-subtitle">Real-time face detection from inbuilt webcam</p>
     </div>
 
     <div th:if="${successMessage}" class="alert alert-success"
@@ -87,7 +86,6 @@
     <div th:if="${errorMessage}"   class="alert alert-error"
          th:text="${errorMessage}"></div>
 
-    <!-- Camera ON -->
     <div th:if="${cameraRunning}">
 
         <div class="camera-container">
@@ -103,7 +101,6 @@
             <p id="statusSubline" class="no-data" style="margin-top:0.25rem;">Please keep face clear and front-facing.</p>
         </div>
 
-        <!-- Matched Criminal Info Box -->
         <div class="matched-info" id="matchedInfo">
             <h3 style="color:#e94560; margin-bottom:0.75rem;">
                 🚨 CRIMINAL DETECTED
@@ -126,7 +123,6 @@
         </div>
     </div>
 
-    <!-- Camera OFF -->
     <div th:unless="${cameraRunning}">
         <div class="camera-placeholder">
             📷 Camera feed will appear here after starting
@@ -139,7 +135,6 @@
         </form>
     </div>
 
-    <!-- Live Alerts Box -->
     <div class="table-section" style="margin-top:2rem;">
         <h3>🔴 Live Detections
             <span id="liveCount" class="badge badge-danger"

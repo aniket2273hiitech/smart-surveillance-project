@@ -14,25 +14,11 @@
 
     <div class="page-header">
         <h2>🔍 Criminal Face Scan</h2>
-        <p class="page-subtitle">Upload a camera frame or image to run face detection and matching</p>
     </div>
 
     <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
 
     <div class="form-card scan-card">
-
-        <!--
-          Workflow Steps Visual (matches synopsis Section 8)
-        -->
-        <div class="workflow-steps">
-            <div class="step">1. Upload Image</div>
-            <div class="step-arrow">→</div>
-            <div class="step">2. Haar Cascade Detection</div>
-            <div class="step-arrow">→</div>
-            <div class="step">3. Histogram Matching</div>
-            <div class="step-arrow">→</div>
-            <div class="step">4. Alert Generation</div>
-        </div>
 
         <form th:action="@{/detection/scan}"
               method="post"
@@ -58,7 +44,6 @@
                 <p class="form-hint">Upload a frame captured from a CCTV camera or webcam.</p>
             </div>
 
-            <!-- Image preview before submit -->
             <div class="form-group" id="previewContainer" style="display:none;">
                 <label>Preview:</label>
                 <img id="imagePreview" src="" alt="Preview" class="image-preview"/>
