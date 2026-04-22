@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Add Criminal Record — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Add Criminal Record</h2>
+        <a th:href="@{/admin/criminals}" class="btn btn-outline">← Back to List</a>
+    </div>
+
+    <!-- Flash Messages -->
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <div class="form-card">
+        <!--
+          enctype="multipart/form-data" is REQUIRED for file upload.
+          Spring Boot's MultipartFile in CriminalService reads from this.
+        -->
+        <form th:action="@{/admin/criminals/add}"
+              method="post"
+              enctype="multipart/form-data"
+              class="record-form">
+
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text"
+                       id="name"
+                       name="name"
+                       placeholder="Enter criminal's full name"
+                       required/>
+            </div>
+
+            <div class="form-group">
+                <label for="crimeType">Crime Type *</label>
+                <select id="crimeType" name="crimeType" required>
+                    <option value="">-- Select Crime Type --</option>
+                    <option value="Theft">Theft</option>
+                    <option value="Robbery">Robbery</option>
+                    <option value="Murder">Murder</option>
+                    <option value="Assault">Assault</option>
+                    <option value="Fraud">Fraud</option>
+                    <option value="Drug Trafficking">Drug Trafficking</option>
+                    <option value="Kidnapping">Kidnapping</option>
+                    <option value="Cybercrime">Cybercrime</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="caseDetails">Case Details</label>
+                <textarea id="caseDetails"
+                          name="caseDetails"
+                          rows="4"
+                          placeholder="Enter case description, FIR number, known associates..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="photo">Criminal Photo * (JPG/PNG, max 10MB)</label>
+                <input type="file"
+                       id="photo"
+                       name="photo"
+                       accept="image/jpeg,image/png"
+                       required/>
+                <p class="form-hint">
+                    Upload a clear, front-facing photo. This image will be used for face matching.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="referencePhotos">Additional Reference Photos (Optional)</label>
+                <input type="file"
+                       id="referencePhotos"
+                       name="referencePhotos"
+                       accept="image/jpeg,image/png"
+                       multiple/>
+                <p class="form-hint">
+                    Add multiple extra angles/lighting photos (recommended 3-6) to improve live detection accuracy.
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Criminal Record</button>
+                <a th:href="@{/admin/criminals}" class="btn btn-outline">Cancel</a>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+</body>
+</html>

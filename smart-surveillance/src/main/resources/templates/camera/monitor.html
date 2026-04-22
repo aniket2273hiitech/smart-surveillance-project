@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Camera Monitor — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <style>
+        .camera-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 640px;
+        }
+        .camera-feed {
+            width: 100%;
+            border: 3px solid #1a1a2e;
+            border-radius: 8px;
+            background: #000;
+            display: block;
+        }
+        .camera-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .overlay-waiting {
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+        }
+        .overlay-matched {
+            background: rgba(233, 69, 96, 0.9);
+            color: #fff;
+            animation: flashRed 0.5s infinite;
+        }
+        .overlay-nomatch {
+            background: rgba(40, 167, 69, 0.8);
+            color: #fff;
+        }
+        @keyframes flashRed {
+            0%,100% { background: rgba(233,69,96,0.9); }
+            50%      { background: rgba(180,30,50,0.9); }
+        }
+        .camera-placeholder {
+            width: 100%;
+            max-width: 640px;
+            height: 360px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        .matched-info {
+            background: linear-gradient(135deg,#fff5f5,#ffe0e0);
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        .matched-info.show { display: block; }
+        .matched-info p { padding: 0.3rem 0; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>📹 Live Camera Monitoring</h2>
+        <p class="page-subtitle">Real-time face detection from inbuilt webcam</p>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}"   class="alert alert-error"
+         th:text="${errorMessage}"></div>
+
+    <!-- Camera ON -->
+    <div th:if="${cameraRunning}">
+
+        <div class="camera-container">
+            <img src="/camera/stream"
+                 class="camera-feed"
+                 alt="Live Camera Feed"/>
+            <div class="camera-overlay overlay-waiting" id="statusOverlay">
+                🔍 Scanning for faces...
+            </div>
+        </div>
+
+        <!-- Matched Criminal Info Box -->
+        <div class="matched-info" id="matchedInfo">
+            <h3 style="color:#e94560; margin-bottom:0.75rem;">
+                🚨 CRIMINAL DETECTED
+            </h3>
+            <p><strong>Name:</strong>
+                <span id="criminalName">—</span></p>
+            <p><strong>Confidence:</strong>
+                <span id="confidence">—</span></p>
+            <p><strong>Time:</strong>
+                <span id="detectionTime">—</span></p>
+        </div>
+
+        <div style="margin-top:1rem;">
+            <form th:action="@{/camera/stop}" method="post"
+                  style="display:inline;">
+                <button type="submit" class="btn btn-danger">
+                    ⏹ Stop Camera
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Camera OFF -->
+    <div th:unless="${cameraRunning}">
+        <div class="camera-placeholder">
+            📷 Camera feed will appear here after starting
+        </div>
+        <form th:action="@{/camera/start}" method="post"
+              style="margin-top:1rem;">
+            <button type="submit" class="btn btn-scan">
+                ▶ Start Camera Monitoring
+            </button>
+        </form>
+    </div>
+
+    <!-- Live Alerts Box -->
+    <div class="table-section" style="margin-top:2rem;">
+        <h3>🔴 Live Detections
+            <span id="liveCount" class="badge badge-danger"
+                  style="display:none;"></span>
+        </h3>
+        <div id="liveAlertBox">
+            <p class="no-data" id="noAlertMsg">No detections yet...</p>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/websocket :: websocketScript}"></div>
+
+<script th:inline="javascript">
+    // Poll /camera/status every 1 second to update overlay
+    function pollStatus() {
+        fetch('/camera/status', { cache: 'no-store' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var overlay  = document.getElementById('statusOverlay');
+                var matchBox = document.getElementById('matchedInfo');
+
+                if (!data.running) return;
+
+                if (data.lastResult === 'MATCHED') {
+                    // Show red flashing overlay
+                    overlay.className = 'camera-overlay overlay-matched';
+                    overlay.textContent = '🚨 CRIMINAL DETECTED: ' + data.lastCriminalName;
+
+                    // Show criminal info box
+                    matchBox.classList.add('show');
+                    document.getElementById('criminalName').textContent =
+                        data.lastCriminalName;
+                    document.getElementById('confidence').textContent =
+                        (data.lastConfidence * 100).toFixed(1) + '%';
+                    document.getElementById('detectionTime').textContent =
+                        new Date().toLocaleTimeString();
+
+                } else if (data.lastResult === 'NO_MATCH') {
+                    overlay.className = 'camera-overlay overlay-nomatch';
+                    overlay.textContent = '✅ No criminal detected';
+                    matchBox.classList.remove('show');
+
+                } else {
+                    overlay.className = 'camera-overlay overlay-waiting';
+                    overlay.textContent = '🔍 Scanning for faces...';
+                }
+            })
+            .catch(function(e) {
+                console.log('Status poll error: ' + e);
+            });
+    }
+
+    // Start polling when camera is running
+    var th_cameraRunning = /*[[${cameraRunning}]]*/ false;
+    if (th_cameraRunning) {
+        pollStatus();
+        setInterval(pollStatus, 1000);
+    }
+</script>
+
+</body>
+</html>

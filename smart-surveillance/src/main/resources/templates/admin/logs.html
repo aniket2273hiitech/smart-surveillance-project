@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Detection Logs — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Detection Logs</h2>
+        <p class="page-subtitle">All face detection events — stored for investigation purposes</p>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Timestamp</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Matched Criminal</th>
+                    <th>Confidence</th>
+                    <th>Detected By</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(logs)}">
+                    <td colspan="7" class="no-data">No detection logs available.</td>
+                </tr>
+                <tr th:each="log : ${logs}"
+                    th:classappend="${log.matchStatus.name() == 'MATCHED'} ? 'row-matched' : ''">
+                    <td th:text="${log.id}"></td>
+                    <td th:text="${#temporals.format(log.timestamp, 'dd-MM-yyyy HH:mm:ss')}"></td>
+                    <td th:text="${log.location}"></td>
+                    <td>
+                        <span th:text="${log.matchStatus}"
+                              th:classappend="${log.matchStatus.name() == 'MATCHED'} ? 'badge badge-danger' : 'badge badge-secondary'">
+                        </span>
+                    </td>
+                    <td th:text="${log.matchedCriminal != null ? log.matchedCriminal.name : '—'}"></td>
+                    <td th:text="${log.confidenceScore != null ? #numbers.formatDecimal(log.confidenceScore * 100, 1, 1) + '%' : '—'}"></td>
+                    <td th:text="${log.detectedBy != null ? log.detectedBy.username : '—'}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+</body>
+</html>

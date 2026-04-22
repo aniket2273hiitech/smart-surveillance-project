@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+<body>
+
+<!--
+  Reusable navbar fragment.
+  Usage in other templates:
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+-->
+<nav th:fragment="navbar" class="navbar">
+    <div class="navbar-brand">
+        <span class="navbar-icon">📹</span>
+        <span>Smart Surveillance</span>
+    </div>
+
+    <ul class="navbar-links">
+
+        <!-- ADMIN links -->
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/criminals}">Criminals</a>
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/users}">Users</a>
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/logs}">Detection Logs</a>
+        </li>
+
+        <!-- POLICE OFFICER links -->
+        <li sec:authorize="hasRole('POLICE_OFFICER')">
+            <a th:href="@{/officer/dashboard}">Dashboard</a>
+        </li>
+        <li sec:authorize="hasRole('POLICE_OFFICER')">
+            <a th:href="@{/officer/alerts}">
+                Alerts
+                <!-- Alert badge -->
+            </a>
+        </li>
+        <li sec:authorize="hasRole('POLICE_OFFICER')">
+            <a th:href="@{/officer/reports}">Reports</a>
+        </li>
+
+        <!-- Both roles -->
+        <li sec:authorize="isAuthenticated()">
+            <a th:href="@{/camera/monitor}">📹 Live Monitor</a>
+        </li>
+        <li sec:authorize="isAuthenticated()">
+            <a th:href="@{/detection/scan}">🔍 Scan Face</a>
+        </li>
+    </ul>
+
+    <div class="navbar-user">
+        <span sec:authentication="name" class="username-display"></span>
+        <span sec:authorize="hasRole('ADMIN')" class="role-badge role-admin">ADMIN</span>
+        <span sec:authorize="hasRole('POLICE_OFFICER')" class="role-badge role-officer">OFFICER</span>
+        <a th:href="@{/logout}" class="btn btn-logout">Logout</a>
+    </div>
+</nav>
+
+</body>
+</html>

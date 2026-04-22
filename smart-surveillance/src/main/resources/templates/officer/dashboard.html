@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- Real-time alerts via WebSocket — no page refresh needed -->
+    <title>Officer Dashboard — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Officer Dashboard</h2>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <!-- Pending Alerts Banner -->
+    <div th:if="${pendingCount > 0}" class="alert-banner">
+        <span class="alert-banner-icon">🚨</span>
+        <strong th:text="${pendingCount} + ' UNACKNOWLEDGED ALERT(S) REQUIRE YOUR ATTENTION'"></strong>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a th:href="@{/camera/monitor}"  class="btn btn-scan">📹 Live Camera Monitor</a>
+        <a th:href="@{/detection/scan}"  class="btn btn-primary">🔍 Scan Face</a>
+        <a th:href="@{/officer/alerts}"  class="btn btn-secondary">🔔 View All Alerts</a>
+        <a th:href="@{/officer/reports}" class="btn btn-outline">📋 Reports</a>
+    </div>
+
+    <!-- Pending Alerts List -->
+    <div class="table-section">
+        <h3>🔔 Pending Alerts</h3>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Alert ID</th>
+                        <th>Time</th>
+                        <th>Message</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(pendingAlerts)}">
+                        <td colspan="5" class="no-data">✅ No pending alerts.</td>
+                    </tr>
+                    <tr th:each="alert : ${pendingAlerts}" class="row-matched">
+                        <td th:text="${alert.id}"></td>
+                        <td th:text="${#temporals.format(alert.createdAt, 'dd-MM-yyyy HH:mm:ss')}"></td>
+                        <td th:text="${alert.message}"></td>
+                        <td>
+                            <span th:text="${alert.alertType}" class="badge badge-danger"></span>
+                        </td>
+                        <td>
+                            <form th:action="@{/officer/alerts/acknowledge/{id}(id=${alert.id})}"
+                                  method="post">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    ✓ Acknowledge
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Matched Detections -->
+    <div class="table-section">
+        <h3>Recent Criminal Detections</h3>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Location</th>
+                        <th>Criminal Name</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(recentLogs)}">
+                        <td colspan="4" class="no-data">No matched detections yet.</td>
+                    </tr>
+                    <tr th:each="log : ${recentLogs}">
+                        <td th:text="${#temporals.format(log.timestamp, 'dd-MM-yyyy HH:mm:ss')}"></td>
+                        <td th:text="${log.location}"></td>
+                        <td th:text="${log.matchedCriminal != null ? log.matchedCriminal.name : '—'}"></td>
+                        <td th:text="${log.confidenceScore != null ? #numbers.formatDecimal(log.confidenceScore * 100, 1, 1) + '%' : '—'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/websocket :: websocketScript}"></div>
+</body>
+</html>

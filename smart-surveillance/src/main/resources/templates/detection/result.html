@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Detection Result — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Detection Result</h2>
+    </div>
+
+    <!-- ─── MATCHED: Criminal Identified ─────────────────────────────────── -->
+    <div th:if="${isMatched}" class="result-card result-matched">
+
+        <div class="result-icon">🚨</div>
+        <h2 class="result-title">CRIMINAL IDENTIFIED</h2>
+
+        <div class="result-details">
+            <div class="criminal-result-info">
+
+                <img th:src="@{/images/criminal/{id}(id=${result.matchedCriminal.id})}"
+                     alt="Criminal Photo"
+                     class="result-criminal-photo"
+                     onerror="this.onerror=null;this.src='/images/no-photo.svg'"/>
+
+                <div class="criminal-result-text">
+                    <p><strong>Name:</strong>
+                        <span th:text="${result.matchedCriminal.name}"></span>
+                    </p>
+                    <p><strong>Crime Type:</strong>
+                        <span th:text="${result.matchedCriminal.crimeType}"></span>
+                    </p>
+                    <p><strong>Case Details:</strong>
+                        <span th:text="${result.matchedCriminal.caseDetails}"></span>
+                    </p>
+                    <p><strong>Match Confidence:</strong>
+                        <span th:text="${#numbers.formatDecimal(result.confidenceScore * 100, 1, 1) + '%'}"></span>
+                    </p>
+                    <p><strong>Detection Time:</strong>
+                        <span th:text="${#temporals.format(result.timestamp, 'dd-MM-yyyy HH:mm:ss')}"></span>
+                    </p>
+                    <p><strong>Location:</strong>
+                        <span th:text="${result.location}"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p class="result-notice">
+            ⚠️ An alert has been automatically generated and sent to authorized personnel.
+        </p>
+    </div>
+
+    <!-- ─── NO MATCH ───────────────────────────────────────────────────────── -->
+    <div th:unless="${isMatched}" class="result-card result-clear">
+
+        <div class="result-icon">✅</div>
+        <h2 class="result-title">NO MATCH FOUND</h2>
+
+        <div class="result-details">
+            <p><strong>Status:</strong> No criminal face detected in the uploaded image.</p>
+            <p><strong>Location:</strong>
+                <span th:text="${result.location}"></span>
+            </p>
+            <p><strong>Detection Time:</strong>
+                <span th:text="${#temporals.format(result.timestamp, 'dd-MM-yyyy HH:mm:ss')}"></span>
+            </p>
+            <p th:if="${result.confidenceScore != null}">
+                <strong>Best similarity (top candidate):</strong>
+                <span th:text="${#numbers.formatDecimal(result.confidenceScore * 100, 1, 1) + '%'}"></span>
+            </p>
+            <p th:if="${result.secondBestScore != null}">
+                <strong>Second-best similarity:</strong>
+                <span th:text="${#numbers.formatDecimal(result.secondBestScore * 100, 1, 1) + '%'}"></span>
+            </p>
+            <p th:if="${result.bestCandidateName != null}">
+                <strong>Leading candidate (not confirmed):</strong>
+                <span th:text="${result.bestCandidateName}"></span>
+            </p>
+            <p th:if="${result.scanRejectionNote != null}" class="result-hint"
+               th:text="${result.scanRejectionNote}"></p>
+            <p th:if="${result.scanRejectionNote == null and result.confidenceScore != null}"
+               class="result-hint">
+                Similarity did not pass the scan rules (see application settings for scan threshold and margin).
+            </p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="result-actions">
+        <a th:href="@{/detection/scan}" class="btn btn-scan">🔍 Scan Another Image</a>
+        <a th:href="@{/dashboard}"      class="btn btn-outline">← Back to Dashboard</a>
+    </div>
+
+</main>
+
+</body>
+</html>

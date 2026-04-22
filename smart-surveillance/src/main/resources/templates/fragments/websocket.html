@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<th:block th:fragment="websocketScript">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script th:inline="javascript">
+        var alertCount = 0;
+
+        // Only connect on dashboard and monitor pages
+        // Prevents flickering on criminals, users, logs pages
+        var currentPath = window.location.pathname;
+        var shouldConnect = currentPath.includes('dashboard') ||
+                            currentPath.includes('monitor');
+
+        if (shouldConnect) {
+            var socket = new SockJS('/ws');
+            var stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+
+            stompClient.connect({}, function (frame) {
+                stompClient.subscribe('/topic/alerts', function (message) {
+                    var alert = JSON.parse(message.body);
+                    showLiveAlert(alert);
+                });
+            }, function(error) {
+                console.log('WebSocket not available.');
+            });
+        }
+
+        function showLiveAlert(alert) {
+            alertCount++;
+            var badge = document.getElementById('liveCount');
+            if (badge) {
+                badge.style.display = 'inline-block';
+                badge.textContent   = alertCount + ' NEW';
+            }
+            var noMsg = document.getElementById('noAlertMsg');
+            if (noMsg) noMsg.style.display = 'none';
+
+            var card = document.createElement('div');
+            card.className = 'live-alert-card';
+            card.innerHTML =
+                '<div class="live-alert-header">' +
+                    '<span class="live-alert-icon">🚨</span>' +
+                    '<strong>CRIMINAL DETECTED</strong>' +
+                    '<span class="live-alert-time">' + alert.timestamp + '</span>' +
+                '</div>' +
+                '<div class="live-alert-body">' +
+                    '<p><strong>Name:</strong> '       + alert.criminalName      + '</p>' +
+                    '<p><strong>Crime:</strong> '      + alert.crimeType         + '</p>' +
+                    '<p><strong>Location:</strong> '   + alert.location          + '</p>' +
+                    '<p><strong>Confidence:</strong> ' + alert.confidencePercent + '</p>' +
+                '</div>';
+
+            var box = document.getElementById('liveAlertBox');
+            if (box) box.insertBefore(card, box.firstChild);
+
+            if (window.Notification && Notification.permission === 'granted') {
+                new Notification('🚨 Criminal Detected', {
+                    body: alert.criminalName + ' spotted at ' + alert.location
+                });
+            }
+        }
+
+        if (window.Notification && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    </script>
+
+    <style>
+        .live-alert-card {
+            background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            animation: slideIn 0.4s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .live-alert-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .live-alert-icon   { font-size: 1.4rem; }
+        .live-alert-time   { margin-left: auto; font-size: 0.8rem; color: #888; }
+        .live-alert-body p { font-size: 0.9rem; padding: 0.2rem 0; border-bottom: 1px solid #eee; }
+        .status-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+        .status-on  { background: #28a745; box-shadow: 0 0 6px #28a745; }
+        .status-off { background: #dc3545; }
+    </style>
+
+</th:block>
+
+</body>
+</html>

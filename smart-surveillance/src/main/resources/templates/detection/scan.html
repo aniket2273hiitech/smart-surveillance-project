@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Face Scan — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>🔍 Criminal Face Scan</h2>
+        <p class="page-subtitle">Upload a camera frame or image to run face detection and matching</p>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+
+    <div class="form-card scan-card">
+
+        <!--
+          Workflow Steps Visual (matches synopsis Section 8)
+        -->
+        <div class="workflow-steps">
+            <div class="step">1. Upload Image</div>
+            <div class="step-arrow">→</div>
+            <div class="step">2. Haar Cascade Detection</div>
+            <div class="step-arrow">→</div>
+            <div class="step">3. Histogram Matching</div>
+            <div class="step-arrow">→</div>
+            <div class="step">4. Alert Generation</div>
+        </div>
+
+        <form th:action="@{/detection/scan}"
+              method="post"
+              enctype="multipart/form-data"
+              class="record-form">
+
+            <div class="form-group">
+                <label for="location">Camera / Location Label</label>
+                <input type="text"
+                       id="location"
+                       name="location"
+                       placeholder="e.g. Main Gate, Entrance A, Camera 3"
+                       value="Main Gate"/>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Upload Image Frame * (JPG/PNG)</label>
+                <input type="file"
+                       id="image"
+                       name="image"
+                       accept="image/jpeg,image/png"
+                       required/>
+                <p class="form-hint">Upload a frame captured from a CCTV camera or webcam.</p>
+            </div>
+
+            <!-- Image preview before submit -->
+            <div class="form-group" id="previewContainer" style="display:none;">
+                <label>Preview:</label>
+                <img id="imagePreview" src="" alt="Preview" class="image-preview"/>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-scan btn-full">Run Face Detection</button>
+            </div>
+
+        </form>
+    </div>
+
+</main>
+
+<script>
+    // Show image preview before submitting
+    document.getElementById('image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('imagePreview').src = ev.target.result;
+                document.getElementById('previewContainer').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+
+</body>
+</html>

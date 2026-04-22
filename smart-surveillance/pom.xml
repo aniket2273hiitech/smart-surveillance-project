@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.surveillance</groupId>
+    <artifactId>smart-surveillance</artifactId>
+    <version>1.0.0</version>
+    <name>Smart Surveillance System</name>
+    <description>Criminal Face Detection System - LNCT University - Aniket Faguna (LNCDBTC11036)</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <!-- OpenCV version must match the native .jar you install locally -->
+<!--        <opencv.version>4.9.0</opencv.version>-->
+    </properties>
+
+    <dependencies>
+
+        <!-- Spring Boot Web (Spring MVC + Embedded Tomcat) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf (Server-side rendering) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf + Spring Security integration (sec:authorize tags) -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+
+        <!-- Spring Data JPA (Hibernate) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Validation (for @NotBlank, @Email etc.) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Lombok (reduces boilerplate - getters, setters, constructors) -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- OpenCV Java bindings (system-scoped JAR - must be installed locally) -->
+        <!-- INSTRUCTIONS:
+             1. Download OpenCV 4.9.0 from https://opencv.org/releases/
+             2. After install, find opencv-490.jar in: opencv/build/java/
+             3. Run: mvn install:install-file -Dfile=path/to/opencv-490.jar
+                     -DgroupId=org.opencv -DartifactId=opencv
+                     -Dversion=4.9.0 -Dpackaging=jar
+             4. Then this dependency will resolve correctly
+        -->
+<!--        <dependency>-->
+<!--            <groupId>org.opencv</groupId>-->
+<!--            <artifactId>opencv</artifactId>-->
+<!--            <version>${opencv.version}</version>-->
+<!--        </dependency>-->
+
+        <!-- WebSocket (STOMP over SockJS) for real-time alerts -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- Needed for MockMultipartFile in CameraStreamService -->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework</groupId>-->
+<!--            <artifactId>spring-test</artifactId>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
+
+        <!-- Spring Boot Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- MockMultipartFile for camera frame conversion -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openpnp</groupId>
+            <artifactId>opencv</artifactId>
+            <version>4.9.0-0</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

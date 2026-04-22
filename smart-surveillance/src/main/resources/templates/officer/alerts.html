@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Alerts — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>All Alerts</h2>
+        <span class="badge badge-danger"
+              th:if="${pendingCount > 0}"
+              th:text="${pendingCount} + ' Pending'">
+        </span>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Created At</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(alerts)}">
+                    <td colspan="6" class="no-data">No alerts found.</td>
+                </tr>
+                <tr th:each="alert : ${alerts}"
+                    th:classappend="${!alert.acknowledged} ? 'row-matched' : ''">
+                    <td th:text="${alert.id}"></td>
+                    <td th:text="${#temporals.format(alert.createdAt, 'dd-MM-yyyy HH:mm:ss')}"></td>
+                    <td>
+                        <span th:text="${alert.alertType}" class="badge badge-danger"></span>
+                    </td>
+                    <td th:text="${alert.message}"></td>
+                    <td>
+                        <span th:if="${alert.acknowledged}"  class="badge badge-success">Acknowledged</span>
+                        <span th:unless="${alert.acknowledged}" class="badge badge-danger">Pending</span>
+                    </td>
+                    <td>
+                        <form th:if="${!alert.acknowledged}"
+                              th:action="@{/officer/alerts/acknowledge/{id}(id=${alert.id})}"
+                              method="post">
+                            <button type="submit" class="btn btn-sm btn-success">✓ Acknowledge</button>
+                        </form>
+                        <span th:if="${alert.acknowledged}" class="text-muted">—</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+</body>
+</html>

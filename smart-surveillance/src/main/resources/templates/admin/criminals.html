@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Criminal Records — Smart Surveillance</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="page-header">
+        <h2>Criminal Records</h2>
+        <a th:href="@{/admin/criminals/add}" class="btn btn-primary">+ Add New Criminal</a>
+    </div>
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}"   class="alert alert-error"   th:text="${errorMessage}"></div>
+
+    <!-- Search -->
+    <form th:action="@{/admin/criminals}" method="get" class="search-form">
+        <input type="text"
+               name="search"
+               th:value="${search}"
+               placeholder="Search by criminal name..."
+               class="search-input"/>
+        <button type="submit" class="btn btn-secondary">Search</button>
+        <a th:href="@{/admin/criminals}" class="btn btn-outline">Clear</a>
+    </form>
+
+    <!-- Criminals Table -->
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Crime Type</th>
+                    <th>Case Details</th>
+                    <th>Registered At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(criminals)}">
+                    <td colspan="8" class="no-data">No criminal records found.</td>
+                </tr>
+                <tr th:each="criminal : ${criminals}"
+                    th:classappend="${!criminal.active} ? 'row-inactive' : ''">
+                    <td th:text="${criminal.id}"></td>
+                    <td>
+                        <img th:src="@{/images/criminal/{id}(id=${criminal.id})}"
+                             alt="Criminal Photo"
+                             class="criminal-thumb"
+                             onerror="this.onerror=null;this.src='/images/no-photo.svg'"/>
+                    </td>
+                    <td th:text="${criminal.name}"></td>
+                    <td th:text="${criminal.crimeType}"></td>
+                    <td>
+                        <span th:text="${#strings.abbreviate(criminal.caseDetails, 60)}"></span>
+                    </td>
+                    <td th:text="${#temporals.format(criminal.registeredAt, 'dd-MM-yyyy')}"></td>
+                    <td>
+                        <span th:text="${criminal.active ? 'Active' : 'Inactive'}"
+                              th:classappend="${criminal.active} ? 'badge badge-success' : 'badge badge-secondary'">
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+                            <form th:if="${criminal.active}"
+                                  th:action="@{/admin/criminals/deactivate/{id}(id=${criminal.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Deactivate this record?')">
+                                <button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                            </form>
+                            <form th:unless="${criminal.active}"
+                                  th:action="@{/admin/criminals/activate/{id}(id=${criminal.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Activate this record?')">
+                                <button type="submit" class="btn btn-sm btn-secondary">Activate</button>
+                            </form>
+                            <form th:action="@{/admin/criminals/delete/{id}(id=${criminal.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Delete this criminal record permanently?')">
+                                <button type="submit" class="btn btn-sm btn-outline">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+</body>
+</html>
