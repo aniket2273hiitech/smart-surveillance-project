@@ -6,7 +6,7 @@
 
 <nav th:fragment="navbar" class="navbar">
     <div class="navbar-brand">
-        <span class="navbar-icon">📹</span>
+        <span class="navbar-icon"></span>
         <span>Smart Surveillance</span>
     </div>
 
@@ -38,10 +38,10 @@
         </li>
 
         <li sec:authorize="isAuthenticated()">
-            <a th:href="@{/camera/monitor}">📹 Live Monitor</a>
+            <a th:href="@{/camera/monitor}">Live Monitor</a>
         </li>
         <li sec:authorize="isAuthenticated()">
-            <a th:href="@{/detection/scan}">🔍 Scan Face</a>
+            <a th:href="@{/detection/scan}">Scan Face</a>
         </li>
     </ul>
 

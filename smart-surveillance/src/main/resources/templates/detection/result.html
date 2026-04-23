@@ -19,7 +19,7 @@
     <!-- ─── MATCHED: Criminal Identified ─────────────────────────────────── -->
     <div th:if="${isMatched}" class="result-card result-matched">
 
-        <div class="result-icon">🚨</div>
+        <div class="result-icon"></div>
         <h2 class="result-title">CRIMINAL IDENTIFIED</h2>
 
         <div class="result-details">
@@ -54,14 +54,14 @@
         </div>
 
         <p class="result-notice">
-            ⚠️ An alert has been automatically generated and sent to authorized personnel.
+            An alert has been automatically generated and sent to authorized personnel.
         </p>
     </div>
 
     <!-- ─── NO MATCH ───────────────────────────────────────────────────────── -->
     <div th:unless="${isMatched}" class="result-card result-clear">
 
-        <div class="result-icon">✅</div>
+        <div class="result-icon"></div>
         <h2 class="result-title">NO MATCH FOUND</h2>
 
         <div class="result-details">
@@ -95,7 +95,7 @@
 
     <!-- Action Buttons -->
     <div class="result-actions">
-        <a th:href="@{/detection/scan}" class="btn btn-scan">🔍 Scan Another Image</a>
+        <a th:href="@{/detection/scan}" class="btn btn-scan">Scan Another Image</a>
         <a th:href="@{/dashboard}"      class="btn btn-outline">← Back to Dashboard</a>
     </div>
 

@@ -27,7 +27,7 @@
     <div class="stats-grid">
 
         <div class="stat-card stat-blue">
-            <div class="stat-icon">👤</div>
+            <div class="stat-icon"></div>
             <div class="stat-info">
                 <h3 th:text="${totalCriminals}">0</h3>
                 <p>Total Criminals</p>
@@ -35,7 +35,7 @@
         </div>
 
         <div class="stat-card stat-red">
-            <div class="stat-icon">⚠️</div>
+            <div class="stat-icon"></div>
             <div class="stat-info">
                 <h3 th:text="${totalMatches}">0</h3>
                 <p>Total Matches</p>
@@ -43,7 +43,7 @@
         </div>
 
         <div class="stat-card stat-orange">
-            <div class="stat-icon">🔔</div>
+            <div class="stat-icon"></div>
             <div class="stat-info">
                 <h3 th:text="${pendingAlerts}">0</h3>
                 <p>Pending Alerts</p>
@@ -58,7 +58,7 @@
         <div class="action-buttons">
             <a th:href="@{/admin/criminals/add}" class="btn btn-primary">+ Add Criminal Record</a>
             <a th:href="@{/admin/users/add}"     class="btn btn-secondary">+ Register Officer</a>
-            <a th:href="@{/detection/scan}"      class="btn btn-scan">🔍 Run Face Scan</a>
+            <a th:href="@{/detection/scan}"      class="btn btn-scan"> Run Face Scan</a>
         </div>
     </div>
 

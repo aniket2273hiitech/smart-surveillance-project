@@ -45,7 +45,7 @@
             card.className = 'live-alert-card';
             card.innerHTML =
                 '<div class="live-alert-header">' +
-                    '<span class="live-alert-icon">🚨</span>' +
+                    '<span class="live-alert-icon"></span>' +
                     '<strong>CRIMINAL DETECTED</strong>' +
                     '<span class="live-alert-time">' + alert.timestamp + '</span>' +
                 '</div>' +
@@ -60,7 +60,7 @@
             if (box) box.insertBefore(card, box.firstChild);
 
             if (window.Notification && Notification.permission === 'granted') {
-                new Notification('🚨 Criminal Detected', {
+                new Notification('Criminal Detected', {
                     body: alert.criminalName + ' spotted at ' + alert.location
                 });
             }

@@ -79,6 +79,12 @@ public class FaceDetectionService {
 
     @Value("${app.detection.use-visual-score:false}")
     private boolean useVisualScore;
+    @Value("${app.detection.live-topk:2}")
+    private int liveTopK;
+    @Value("${app.detection.live-min-face-size:90}")
+    private int liveMinFaceSize;
+    @Value("${app.detection.live-min-blur-variance:60.0}")
+    private double liveMinBlurVariance;
     @Value("${app.detection.use-lbph:true}")
     private boolean useLbph;
     @Value("${app.detection.lbph-threshold:70.0}")
@@ -330,7 +336,9 @@ public class FaceDetectionService {
 
     private double scoreAgainstCriminal(double[] liveEmbedding, Mat detectedFace, Criminal criminal) {
         List<double[]> criminalEmbeddings = getOrBuildCriminalEmbeddings(criminal);
-        double embeddingScore = bestCosineSimilarity(liveEmbedding, criminalEmbeddings);
+        // For live mode we use a more robust score than max(): average of top-K similarities.
+        // This avoids wrong names caused by one "lucky" reference photo.
+        double embeddingScore = averageTopKCosineSimilarity(liveEmbedding, criminalEmbeddings, liveTopK);
         if (!useVisualScore) {
             return embeddingScore;
         }
@@ -502,7 +510,11 @@ public class FaceDetectionService {
 
             MatOfRect faces = new MatOfRect();
             faceDetector.detectMultiScale(gray, faces, 1.1, 5, 0, new Size(30, 30), new Size());
-            Mat faceMat = faces.toArray().length > 0 ? new Mat(gray, faces.toArray()[0]) : gray;
+            // Strict enrollment: only use real detected face crops as training prototypes.
+            if (faces.toArray().length == 0) {
+                continue;
+            }
+            Mat faceMat = new Mat(gray, faces.toArray()[0]);
 
             Mat resized = new Mat();
             Imgproc.resize(faceMat, resized, new Size(100, 100));
@@ -523,6 +535,30 @@ public class FaceDetectionService {
             }
         }
         return best;
+    }
+
+    private double averageTopKCosineSimilarity(double[] probe, List<double[]> candidates, int k) {
+        if (probe == null || candidates == null || candidates.isEmpty()) {
+            return 0.0;
+        }
+        int kk = Math.max(1, k);
+        double[] top = new double[Math.min(kk, candidates.size())];
+        for (int i = 0; i < top.length; i++) top[i] = 0.0;
+
+        for (double[] c : candidates) {
+            double s = cosineSimilarity(probe, c);
+            // insert into top[] descending
+            for (int i = 0; i < top.length; i++) {
+                if (s > top[i]) {
+                    double prev = top[i];
+                    top[i] = s;
+                    s = prev;
+                }
+            }
+        }
+        double sum = 0.0;
+        for (double v : top) sum += v;
+        return sum / top.length;
     }
 
     private double[] buildEmbedding(Mat face100x100Gray) {
@@ -776,9 +812,18 @@ public class FaceDetectionService {
         Rect bestRect = null;
 
         for (Rect rect : faces) {
+            if (rect.width < liveMinFaceSize || rect.height < liveMinFaceSize) {
+                continue;
+            }
             Mat faceRoi = new Mat(gray, rect);
             Mat resized = new Mat();
             Imgproc.resize(faceRoi, resized, new Size(100, 100));
+
+            // Quality gate: very blurry faces cause random false matches.
+            if (varianceOfLaplacian(resized) < liveMinBlurVariance) {
+                continue;
+            }
+
             double[] embedding = buildEmbedding(resized);
 
             MatchCandidate localCandidate = findBestCandidate(embedding, resized, criminals);
@@ -837,6 +882,16 @@ public class FaceDetectionService {
             return new LiveFrameResult(annotated, status, bestMatch.getName(), bestScore);
         }
         return new LiveFrameResult(annotated, "NO_MATCH", "", 0.0);
+    }
+
+    private double varianceOfLaplacian(Mat gray100x100) {
+        Mat lap = new Mat();
+        Imgproc.Laplacian(gray100x100, lap, CvType.CV_64F);
+        MatOfDouble mean = new MatOfDouble();
+        MatOfDouble std = new MatOfDouble();
+        Core.meanStdDev(lap, mean, std);
+        double s = std.get(0, 0)[0];
+        return s * s;
     }
 
     private synchronized boolean shouldConfirmLiveMatch(String criminalName) {

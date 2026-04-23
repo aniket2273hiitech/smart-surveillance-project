@@ -19,19 +19,19 @@
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
 
     <div th:if="${pendingCount > 0}" class="alert-banner">
-        <span class="alert-banner-icon">🚨</span>
+        <span class="alert-banner-icon"></span>
         <strong th:text="${pendingCount} + ' UNACKNOWLEDGED ALERT(S) REQUIRE YOUR ATTENTION'"></strong>
     </div>
 
     <div class="quick-actions">
-        <a th:href="@{/camera/monitor}"  class="btn btn-scan">📹 Live Camera Monitor</a>
-        <a th:href="@{/detection/scan}"  class="btn btn-primary">🔍 Scan Face</a>
-        <a th:href="@{/officer/alerts}"  class="btn btn-secondary">🔔 View All Alerts</a>
-        <a th:href="@{/officer/reports}" class="btn btn-outline">📋 Reports</a>
+        <a th:href="@{/camera/monitor}"  class="btn btn-scan">Live Camera Monitor</a>
+        <a th:href="@{/detection/scan}"  class="btn btn-primary">Scan Face</a>
+        <a th:href="@{/officer/alerts}"  class="btn btn-secondary">View All Alerts</a>
+        <a th:href="@{/officer/reports}" class="btn btn-outline">Reports</a>
     </div>
 
     <div class="table-section">
-        <h3>🔔 Pending Alerts</h3>
+        <h3>Pending Alerts</h3>
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -45,7 +45,7 @@
                 </thead>
                 <tbody>
                     <tr th:if="${#lists.isEmpty(pendingAlerts)}">
-                        <td colspan="5" class="no-data">✅ No pending alerts.</td>
+                        <td colspan="5" class="no-data">No pending alerts.</td>
                     </tr>
                     <tr th:each="alert : ${pendingAlerts}" class="row-matched">
                         <td th:text="${alert.id}"></td>
